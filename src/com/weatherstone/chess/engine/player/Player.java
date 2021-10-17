@@ -14,6 +14,8 @@ import com.weatherstone.chess.engine.board.MoveTransition;
 import com.weatherstone.chess.engine.pieces.King;
 import com.weatherstone.chess.engine.pieces.Piece;
 
+import static com.weatherstone.chess.engine.pieces.Piece.PieceType.KING;
+
 public abstract class Player {
 
 	protected final Board board;
@@ -50,7 +52,7 @@ public abstract class Player {
 
 	private King establishKing() {
 		for (final Piece piece : getActivePieces()) {
-			if (piece.getPieceType().isKing()) {
+			if (piece.getPieceType() == KING) {
 				return (King) piece;
 			}
 		}
@@ -97,18 +99,34 @@ public abstract class Player {
 
 	public MoveTransition makeMove(final Move move) {
 
-		if (!isMoveLegal(move)) {
-			return new MoveTransition(this.board, move, MoveStatus.ILLEGAL_MOVE);
+		/*
+		 * if (!isMoveLegal(move)) { return new MoveTransition(this.board, move,
+		 * MoveStatus.ILLEGAL_MOVE); } final Board transitionBoard = move.execute();
+		 * final Collection<Move> kingAttacks = Player.calculateAttacksOnTile(
+		 * transitionBoard.currentPlayer().getOpponent().getPlayerKing().
+		 * getPiecePosition(), transitionBoard.currentPlayer().getLegalMoves()); if
+		 * (!kingAttacks.isEmpty()) { return new MoveTransition(this.board, move,
+		 * MoveStatus.LEAVES_PLAYER_IN_CHECK); }
+		 * 
+		 * return new MoveTransition(transitionBoard, move, MoveStatus.DONE);
+		 */
+		if (!this.legalMoves.contains(move)) {
+			return new MoveTransition(this.board, this.board, move, MoveStatus.ILLEGAL_MOVE);
 		}
-		final Board transitionBoard = move.execute();
-		final Collection<Move> kingAttacks = Player.calculateAttacksOnTile(
-				transitionBoard.currentPlayer().getOpponent().getPlayerKing().getPiecePosition(),
-				transitionBoard.currentPlayer().getLegalMoves());
-		if (!kingAttacks.isEmpty()) {
-			return new MoveTransition(this.board, move, MoveStatus.LEAVES_PLAYER_IN_CHECK);
-		}
-
-		return new MoveTransition(transitionBoard, move, MoveStatus.DONE);
+		final Board transitionedBoard = move.execute();
+		return transitionedBoard.currentPlayer().getOpponent().isInCheck() ?
+				new MoveTransition(this.board, this.board, move, MoveStatus.LEAVES_PLAYER_IN_CHECK) :
+				new MoveTransition(this.board, transitionedBoard, move, MoveStatus.DONE);	
+		
+	}
+	
+	public MoveTransition unMakeMove(final Move move) {
+		return new MoveTransition(this.board, move.undo(), move, MoveStatus.DONE);
+	}
+	
+	protected boolean hasCastleOpportunities() {
+		return !this.isInCheck && !this.playerKing.isCastled() &&
+				(this.playerKing.isKingSideCastleCapable() || this.playerKing.isQueenSideCastleCapable());
 	}
 
 	public abstract Collection<Piece> getActivePieces();

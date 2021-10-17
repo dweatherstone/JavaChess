@@ -2,14 +2,13 @@ package com.weatherstone.chess.engine.pieces;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
 import com.weatherstone.chess.engine.Alliance;
 import com.weatherstone.chess.engine.board.Board;
 import com.weatherstone.chess.engine.board.BoardUtils;
 import com.weatherstone.chess.engine.board.Move;
-import com.weatherstone.chess.engine.board.Tile;
 import com.weatherstone.chess.engine.board.Move.MajorAttackMove;
 import com.weatherstone.chess.engine.board.Move.MajorMove;
 
@@ -44,11 +43,11 @@ public class Bishop extends Piece {
 				candidateDestinationCoordinate += candidateCoordinateOffset;
 
 				if (BoardUtils.isValidTileCoordinate(candidateDestinationCoordinate)) {
-					final Tile candidateDestinationTile = board.getTile(candidateDestinationCoordinate);
-					if (!candidateDestinationTile.isTileOccupied()) {
+					//final Tile candidateDestinationTile = board.getTile(candidateDestinationCoordinate);
+					final Piece pieceAtDestination = board.getPiece(candidateDestinationCoordinate);
+					if (pieceAtDestination == null) {
 						legalMoves.add(new MajorMove(board, this, candidateDestinationCoordinate));
 					} else { // is occupied
-						final Piece pieceAtDestination = candidateDestinationTile.getPiece();
 						final Alliance destinationPieceAlliance = pieceAtDestination.getPieceAlliance();
 						if (this.pieceAlliance != destinationPieceAlliance) {
 							legalMoves.add(
@@ -61,8 +60,10 @@ public class Bishop extends Piece {
 
 		}
 
-		return ImmutableList.copyOf(legalMoves);
+		return Collections.unmodifiableList(legalMoves);
 	}
+	
+	
 	
 	@Override
 	public Bishop movePiece(final Move move) {
@@ -73,13 +74,18 @@ public class Bishop extends Piece {
 	public String toString() {
 		return PieceType.BISHOP.toString();
 	}
+	
+	@Override
+	public int locationBonus() {
+		return this.pieceAlliance.bishopBonus(this.piecePosition);
+	}
 
 	private static boolean isFirstColumnExclusion(final int currentPosition, final int candidateOffset) {
-		return BoardUtils.FIRST_COLUMN[currentPosition] && (candidateOffset == -9 || candidateOffset == 7);
+		return BoardUtils.INSTANCE.FIRST_COLUMN.get(currentPosition) && (candidateOffset == -9 || candidateOffset == 7);
 	}
 
 	private static boolean isEighthColumnExclusion(final int currentPosition, final int candidateOffset) {
-		return BoardUtils.EIGHTH_COLUMN[currentPosition] && (candidateOffset == -7 || candidateOffset == 9);
+		return BoardUtils.INSTANCE.EIGHTH_COLUMN.get(currentPosition) && (candidateOffset == -7 || candidateOffset == 9);
 	}
 
 }

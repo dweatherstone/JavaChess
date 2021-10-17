@@ -2,14 +2,13 @@ package com.weatherstone.chess.engine.pieces;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
 import com.weatherstone.chess.engine.Alliance;
 import com.weatherstone.chess.engine.board.Board;
 import com.weatherstone.chess.engine.board.BoardUtils;
 import com.weatherstone.chess.engine.board.Move;
-import com.weatherstone.chess.engine.board.Tile;
 import com.weatherstone.chess.engine.board.Move.MajorAttackMove;
 import com.weatherstone.chess.engine.board.Move.MajorMove;
 
@@ -43,11 +42,10 @@ public class Rook extends Piece {
 				candidateDestinationCoordinate += candidateCoordinateOffset;
 
 				if (BoardUtils.isValidTileCoordinate(candidateDestinationCoordinate)) {
-					final Tile candidateDestinationTile = board.getTile(candidateDestinationCoordinate);
-					if (!candidateDestinationTile.isTileOccupied()) {
+					final Piece pieceAtDestination = board.getPiece(candidateDestinationCoordinate);
+					if (pieceAtDestination == null) {
 						legalMoves.add(new MajorMove(board, this, candidateDestinationCoordinate));
 					} else { // is occupied
-						final Piece pieceAtDestination = candidateDestinationTile.getPiece();
 						final Alliance destinationPieceAlliance = pieceAtDestination.getPieceAlliance();
 						if (this.pieceAlliance != destinationPieceAlliance) {
 							legalMoves.add(
@@ -60,7 +58,7 @@ public class Rook extends Piece {
 
 		}
 
-		return ImmutableList.copyOf(legalMoves);
+		return Collections.unmodifiableList(legalMoves);
 	}
 	
 	@Override
@@ -70,15 +68,20 @@ public class Rook extends Piece {
 	
 	@Override
 	public String toString() {
-		return PieceType.ROOK.toString();
+		return this.pieceType.toString();
 	}
 
 	private static boolean isFirstColumnExclusion(final int currentPosition, final int candidateOffset) {
-		return BoardUtils.FIRST_COLUMN[currentPosition] && candidateOffset == -1;
+		return BoardUtils.INSTANCE.FIRST_COLUMN.get(currentPosition) && candidateOffset == -1;
 	}
 
 	private static boolean isEighthColumnExclusion(final int currentPosition, final int candidateOffset) {
-		return BoardUtils.EIGHTH_COLUMN[currentPosition] && candidateOffset == 1;
+		return BoardUtils.INSTANCE.EIGHTH_COLUMN.get(currentPosition) && candidateOffset == 1;
+	}
+
+	@Override
+	public int locationBonus() {
+		return this.pieceAlliance.rookBonus(this.piecePosition);
 	}
 
 }

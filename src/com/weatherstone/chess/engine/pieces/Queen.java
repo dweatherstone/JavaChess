@@ -2,14 +2,13 @@ package com.weatherstone.chess.engine.pieces;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
 import com.weatherstone.chess.engine.Alliance;
 import com.weatherstone.chess.engine.board.Board;
 import com.weatherstone.chess.engine.board.BoardUtils;
 import com.weatherstone.chess.engine.board.Move;
-import com.weatherstone.chess.engine.board.Tile;
 import com.weatherstone.chess.engine.board.Move.MajorAttackMove;
 import com.weatherstone.chess.engine.board.Move.MajorMove;
 
@@ -44,11 +43,10 @@ public class Queen extends Piece {
 				candidateDestinationCoordinate += candidateCoordinateOffset;
 
 				if (BoardUtils.isValidTileCoordinate(candidateDestinationCoordinate)) {
-					final Tile candidateDestinationTile = board.getTile(candidateDestinationCoordinate);
-					if (!candidateDestinationTile.isTileOccupied()) {
+					final Piece pieceAtDestination = board.getPiece(candidateDestinationCoordinate);
+					if (pieceAtDestination  == null) {
 						legalMoves.add(new MajorMove(board, this, candidateDestinationCoordinate));
 					} else { // is occupied
-						final Piece pieceAtDestination = candidateDestinationTile.getPiece();
 						final Alliance destinationPieceAlliance = pieceAtDestination.getPieceAlliance();
 						if (this.pieceAlliance != destinationPieceAlliance) {
 							legalMoves.add(
@@ -61,7 +59,7 @@ public class Queen extends Piece {
 
 		}
 
-		return ImmutableList.copyOf(legalMoves);
+		return Collections.unmodifiableList(legalMoves);
 	}
 	
 	@Override
@@ -71,17 +69,22 @@ public class Queen extends Piece {
 	
 	@Override
 	public String toString() {
-		return PieceType.QUEEN.toString();
+		return this.pieceType.toString();
 	}
 
 	private static boolean isFirstColumnExclusion(final int currentPosition, final int candidateOffset) {
-		return BoardUtils.FIRST_COLUMN[currentPosition]
+		return BoardUtils.INSTANCE.FIRST_COLUMN.get(currentPosition)
 				&& (candidateOffset == -9 || candidateOffset == -1 || candidateOffset == 7);
 	}
 
 	private static boolean isEighthColumnExclusion(final int currentPosition, final int candidateOffset) {
-		return BoardUtils.EIGHTH_COLUMN[currentPosition]
+		return BoardUtils.INSTANCE.EIGHTH_COLUMN.get(currentPosition)
 				&& (candidateOffset == -7 || candidateOffset == 1 || candidateOffset == 9);
+	}
+
+	@Override
+	public int locationBonus() {
+		return this.pieceAlliance.queenBonus(this.piecePosition);
 	}
 
 }

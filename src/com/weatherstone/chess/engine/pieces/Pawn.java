@@ -2,9 +2,9 @@ package com.weatherstone.chess.engine.pieces;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
 import com.weatherstone.chess.engine.Alliance;
 import com.weatherstone.chess.engine.board.Board;
 import com.weatherstone.chess.engine.board.BoardUtils;
@@ -39,7 +39,7 @@ public class Pawn extends Piece {
 				continue;
 			}
 
-			if (currentCoordinateOffset == 8 && !board.getTile(candidateDestinationCoordinate).isTileOccupied()) {
+			if (currentCoordinateOffset == 8 && board.getPiece(candidateDestinationCoordinate) == null) {
 				if (this.pieceAlliance.isPawnPromotionSquare(candidateDestinationCoordinate)) {
 					legalMoves.add(new PawnPromotion(new PawnMove(board, this, candidateDestinationCoordinate)));
 				} else {
@@ -47,19 +47,19 @@ public class Pawn extends Piece {
 				}
 			
 			} else if (currentCoordinateOffset == 16 && this.isFirstMove()
-					&& ((BoardUtils.SECOND_ROW[this.piecePosition] && this.pieceAlliance.isBlack())
-							|| BoardUtils.SEVENTH_ROW[this.piecePosition] && this.pieceAlliance.isWhite())) {
+					&& ((BoardUtils.INSTANCE.SECOND_ROW.get(this.piecePosition) && this.pieceAlliance.isBlack())
+							|| BoardUtils.INSTANCE.SEVENTH_ROW.get(this.piecePosition) && this.pieceAlliance.isWhite())) {
 				final int behindCandidateDestinationCoordinate = this.piecePosition
 						+ (this.pieceAlliance.getDirection() * 8);
-				if (!board.getTile(behindCandidateDestinationCoordinate).isTileOccupied()
-						&& !board.getTile(candidateDestinationCoordinate).isTileOccupied()) {
+				if (board.getPiece(behindCandidateDestinationCoordinate) == null
+						&& board.getPiece(candidateDestinationCoordinate) == null) {
 					legalMoves.add(new PawnJump(board, this, candidateDestinationCoordinate));
 				}
 			} else if (currentCoordinateOffset == 7
-					&& !((BoardUtils.EIGHTH_COLUMN[this.piecePosition] && this.pieceAlliance.isWhite())
-							|| (BoardUtils.FIRST_COLUMN[this.piecePosition] && this.pieceAlliance.isBlack()))) {
-				if(board.getTile(candidateDestinationCoordinate).isTileOccupied()) {
-					final Piece pieceOnCandidate = board.getTile(candidateDestinationCoordinate).getPiece();
+					&& !((BoardUtils.INSTANCE.EIGHTH_COLUMN.get(this.piecePosition) && this.pieceAlliance.isWhite())
+							|| (BoardUtils.INSTANCE.FIRST_COLUMN.get(this.piecePosition) && this.pieceAlliance.isBlack()))) {
+				if(board.getPiece(candidateDestinationCoordinate) != null) {
+					final Piece pieceOnCandidate = board.getPiece(candidateDestinationCoordinate);
 					if (this.pieceAlliance != pieceOnCandidate.getPieceAlliance()) {
 						if (this.pieceAlliance.isPawnPromotionSquare(candidateDestinationCoordinate)) {
 							legalMoves.add(new PawnPromotion(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceOnCandidate)));
@@ -76,10 +76,10 @@ public class Pawn extends Piece {
 					}
 				}
 			} else if (currentCoordinateOffset == 9
-					& !((BoardUtils.EIGHTH_COLUMN[this.piecePosition] && this.pieceAlliance.isBlack())
-							|| (BoardUtils.FIRST_COLUMN[this.piecePosition] && this.pieceAlliance.isWhite()))) {
-				if (board.getTile(candidateDestinationCoordinate).isTileOccupied()) {
-					final Piece pieceOnCandidate = board.getTile(candidateDestinationCoordinate).getPiece();
+					& !((BoardUtils.INSTANCE.EIGHTH_COLUMN.get(this.piecePosition) && this.pieceAlliance.isBlack())
+							|| (BoardUtils.INSTANCE.FIRST_COLUMN.get(this.piecePosition) && this.pieceAlliance.isWhite()))) {
+				if (board.getPiece(candidateDestinationCoordinate) != null) {
+					final Piece pieceOnCandidate = board.getPiece(candidateDestinationCoordinate);
 					if (this.pieceAlliance != pieceOnCandidate.getPieceAlliance()) {
 						legalMoves.add(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceOnCandidate));
 					}
@@ -98,7 +98,12 @@ public class Pawn extends Piece {
 			}
 		}
 
-		return ImmutableList.copyOf(legalMoves);
+		return Collections.unmodifiableList(legalMoves);
+	}
+	
+	@Override
+	public int locationBonus() {
+		return this.pieceAlliance.pawnBonus(this.piecePosition);
 	}
 	
 	public Piece getPromotionPiece() {

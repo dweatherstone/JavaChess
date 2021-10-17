@@ -94,6 +94,13 @@ public abstract class Move {
 		builder.setMoveMaker(this.board.currentPlayer().getOpponent().getAlliance());
 		return builder.build();
 	}
+	
+	public Board undo() {
+		final Board.Builder builder = new Builder();
+		this.board.getAllPieces().forEach(builder::setPiece);
+		builder.setMoveMaker(this.board.currentPlayer().getAlliance());
+		return builder.build();
+	}
 
 	public static final class MajorMove extends Move {
 
@@ -110,7 +117,7 @@ public abstract class Move {
 		@Override
 		public String toString() {
 			return movedPiece.getPieceType().toString()
-					+ BoardUtils.getPositionAtCoordinate(this.destinationCoordinate);
+					+ BoardUtils.INSTANCE.getPositionAtCoordinate(this.destinationCoordinate);
 		}
 	}
 
@@ -166,7 +173,7 @@ public abstract class Move {
 
 		@Override
 		public String toString() {
-			return movedPiece.getPieceType() + BoardUtils.getPositionAtCoordinate(this.destinationCoordinate);
+			return movedPiece.getPieceType() + BoardUtils.INSTANCE.getPositionAtCoordinate(this.destinationCoordinate);
 		}
 
 	}
@@ -180,7 +187,7 @@ public abstract class Move {
 
 		@Override
 		public String toString() {
-			return BoardUtils.getPositionAtCoordinate(this.destinationCoordinate);
+			return BoardUtils.INSTANCE.getPositionAtCoordinate(this.destinationCoordinate);
 		}
 
 		@Override
@@ -205,8 +212,8 @@ public abstract class Move {
 
 		@Override
 		public String toString() {
-			return BoardUtils.getPositionAtCoordinate(this.movedPiece.getPiecePosition()).substring(0, 1) + "x"
-					+ BoardUtils.getPositionAtCoordinate(this.destinationCoordinate);
+			return BoardUtils.INSTANCE.getPositionAtCoordinate(this.movedPiece.getPiecePosition()).substring(0, 1) + "x"
+					+ BoardUtils.INSTANCE.getPositionAtCoordinate(this.destinationCoordinate);
 		}
 
 	}
@@ -241,6 +248,15 @@ public abstract class Move {
 			builder.setMoveMaker(this.board.currentPlayer().getOpponent().getAlliance());
 			return builder.build();
 		}
+		
+		@Override
+		public Board undo() {
+			final Board.Builder builder = new Builder();
+			this.board.getAllPieces().forEach(builder::setPiece);
+			builder.setEnPassantPawn((Pawn)this.getAttackedPiece());
+			builder.setMoveMaker(this.board.currentPlayer().getAlliance());
+			return builder.build();
+		}
 
 	}
 
@@ -273,7 +289,7 @@ public abstract class Move {
 
 		@Override
 		public String toString() {
-			return BoardUtils.getPositionAtCoordinate(destinationCoordinate);
+			return BoardUtils.INSTANCE.getPositionAtCoordinate(destinationCoordinate);
 		}
 
 	}
@@ -462,6 +478,10 @@ public abstract class Move {
 
 		private MoveFactory() {
 			throw new RuntimeException("Not instantiable!");
+		}
+		
+		public static Move getNullMove() {
+			return NULL_MOVE;
 		}
 
 		public static Move createMove(final Board board, final int currentCoordinate, final int destinationCoordinate) {

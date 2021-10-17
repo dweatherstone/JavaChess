@@ -6,5 +6,6 @@ import com.weatherstone.chess.engine.board.Move;
 public interface MoveStrategy {
 	
 	public Move execute(Board board);
+	public long getNumBoardsEvaluated();
 
 }

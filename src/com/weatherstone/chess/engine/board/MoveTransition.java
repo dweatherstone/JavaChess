@@ -2,12 +2,17 @@ package com.weatherstone.chess.engine.board;
 
 public class MoveTransition {
 	
-	private final Board transitionBoard;
+	private final Board toBoard;
+	private final Board fromBoard;
 	private final Move move;
 	private final MoveStatus moveStatus;
 	
-	public MoveTransition(final Board transitionBoard, final Move move, final MoveStatus moveStatus) {
-		this.transitionBoard = transitionBoard;
+	public MoveTransition(final Board fromBoard,
+						  final Board toBoard,
+						  final Move move, 
+						  final MoveStatus moveStatus) {
+		this.fromBoard = fromBoard;
+		this.toBoard = toBoard;
 		this.move = move;
 		this.moveStatus = moveStatus;
 	}
@@ -16,8 +21,12 @@ public class MoveTransition {
 		return this.moveStatus;
 	}
 	
-	public Board getTransitionBoard() {
-		return this.transitionBoard;
+	public Board getToBoard() {
+		return this.toBoard;
+	}
+	
+	public Board getFromBoard() {
+		return this.fromBoard;
 	}
 	
 	public Move getTransitionMove() {

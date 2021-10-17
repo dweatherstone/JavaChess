@@ -38,10 +38,12 @@ import com.weatherstone.chess.engine.board.Board;
 import com.weatherstone.chess.engine.board.BoardUtils;
 import com.weatherstone.chess.engine.board.Move;
 import com.weatherstone.chess.engine.board.MoveTransition;
-import com.weatherstone.chess.engine.board.Tile;
+import com.weatherstone.chess.engine.board.MoveUtils;
 import com.weatherstone.chess.engine.pieces.Piece;
+import com.weatherstone.chess.engine.player.Player;
 import com.weatherstone.chess.engine.player.ai.MiniMax;
 import com.weatherstone.chess.engine.player.ai.MoveStrategy;
+import com.weatherstone.chess.engine.player.ai.StandardBoardEvaluator;
 
 public class Table extends Observable {
 
@@ -52,7 +54,7 @@ public class Table extends Observable {
 	private final MoveLog moveLog;
 	private final GameSetup gameSetup;
 	private Board chessBoard;
-	private Tile sourceTile;
+	private Piece sourceTile;
 	// private Tile destinationTile;
 	private Piece humanMovedPiece;
 	private BoardDirection boardDirection;
@@ -166,15 +168,44 @@ public class Table extends Observable {
 	
 	private JMenu createOptionsMenu() {
 		final JMenu optionsMenu = new JMenu("Options");
-		final JMenuItem setupGameMenuItem = new JMenuItem("Setup Game");
-		setupGameMenuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Table.get().getGameSetup().promptUser();
-				Table.get().setupUpdate(Table.get().getGameSetup());
+		final JMenuItem resetMenuItem = new JMenuItem("New Game");
+		resetMenuItem.addActionListener(e -> undoAllMoves());
+		optionsMenu.add(resetMenuItem);
+		
+		final JMenuItem evaluateBoardMenuItem = new JMenuItem("Evaluate Board");
+		evaluateBoardMenuItem.addActionListener(e -> System.out.println(StandardBoardEvaluator.get().evaluationDetails(chessBoard, gameSetup.getSearchDepth())));
+		optionsMenu.add(evaluateBoardMenuItem);
+		
+		final JMenuItem escapeAnalysis = new JMenuItem("Escape Analysis Score");
+		escapeAnalysis.addActionListener(e -> {
+			final Move lastMove = moveLog.getMoves().get(moveLog.size() - 1);
+			if (lastMove != null) {
+				System.out.println(MoveUtils.exchangeScore(lastMove));
 			}
-			
+		});
+		optionsMenu.add(escapeAnalysis);
+		
+		final JMenuItem legalMovesMenuItem = new JMenuItem("Current State");
+        legalMovesMenuItem.addActionListener(e -> {
+            System.out.println(chessBoard.getWhitePieces());
+            System.out.println(chessBoard.getBlackPieces());
+            System.out.println(playerInfo(chessBoard.currentPlayer()));
+            System.out.println(playerInfo(chessBoard.currentPlayer().getOpponent()));
+        });
+        optionsMenu.add(legalMovesMenuItem);
+
+        final JMenuItem undoMoveMenuItem = new JMenuItem("Undo last move");
+        undoMoveMenuItem.addActionListener(e -> {
+            if(Table.get().getMoveLog().size() > 0) {
+                undoLastMove();
+            }
+        });
+        optionsMenu.add(undoMoveMenuItem);
+		
+		final JMenuItem setupGameMenuItem = new JMenuItem("Setup Game");
+		setupGameMenuItem.addActionListener(e -> {
+			Table.get().getGameSetup().promptUser();
+			Table.get().setupUpdate(Table.get().getGameSetup());
 		});
 		
 		optionsMenu.add(setupGameMenuItem);
@@ -182,6 +213,34 @@ public class Table extends Observable {
 		return optionsMenu;
 	}
 	
+	private void undoLastMove() {
+		final Move lastMove = Table.get().getMoveLog().removeMove(Table.get().getMoveLog().size() - 1);
+		this.chessBoard = this.chessBoard.currentPlayer().unMakeMove(lastMove).getToBoard();
+		this.computerMove = null;
+		Table.get().getMoveLog().removeMove(lastMove);
+		Table.get().getGameHistoryPanel().redo(chessBoard, Table.get().getMoveLog());
+		Table.get().getTakenPiecesPanel().redo(Table.get().getMoveLog());
+		Table.get().getBoardPanel().drawBoard(chessBoard);
+	}
+
+	private static String playerInfo(final Player player) {
+		return ("Player is: " +player.getAlliance() + "\nlegal moves (" +player.getLegalMoves().size()+ ") = " +player.getLegalMoves() + "\ninCheck = " +
+                player.isInCheck() + "\nisInCheckMate = " +player.isInCheckMate() +
+                "\nisCastled = " +player.isCastled())+ "\n";
+	}
+
+	private void undoAllMoves() {
+		for (int i = Table.get().getMoveLog().size() - 1; i >= 0; i--) {
+			final Move lastMove = Table.get().getMoveLog().removeMove(Table.get().getMoveLog().size() - 1);
+			this.chessBoard = this.chessBoard.currentPlayer().unMakeMove(lastMove).getToBoard();
+		}
+		this.computerMove = null;
+		Table.get().getMoveLog().clear();
+		Table.get().getGameHistoryPanel().redo(chessBoard, Table.get().getMoveLog());
+		Table.get().getTakenPiecesPanel().redo(Table.get().getMoveLog());
+		Table.get().getBoardPanel().drawBoard(chessBoard);
+	}
+
 	private GameSetup getGameSetup() {
 		return this.gameSetup;
 	}
@@ -275,7 +334,7 @@ public class Table extends Observable {
 			try {
 				final Move bestMove = get();
 				Table.get().updateComputerMove(bestMove);
-				Table.get().updateGameBoard(Table.get().getGameBoard().currentPlayer().makeMove(bestMove).getTransitionBoard());
+				Table.get().updateGameBoard(Table.get().getGameBoard().currentPlayer().makeMove(bestMove).getToBoard());
 				Table.get().getMoveLog().addMove(bestMove);
 				Table.get().getGameHistoryPanel().redo(Table.get().getGameBoard(), Table.get().getMoveLog());
 				Table.get().getTakenPiecesPanel().redo(Table.get().getMoveLog());
@@ -382,42 +441,42 @@ public class Table extends Observable {
 				
 				@Override
 				public void mouseClicked(final MouseEvent event) {
+					if (Table.get().getGameSetup().isAIPlayer(Table.get().getGameBoard().currentPlayer()) ||
+							BoardUtils.isEndGame(Table.get().getGameBoard())) {
+						return;
+					}
+					
 					if (SwingUtilities.isRightMouseButton(event)) {
 						sourceTile = null;
-						// destinationTile = null;
 						humanMovedPiece = null;
 					} else if (SwingUtilities.isLeftMouseButton(event)) {
 						if (sourceTile == null) {
 							// first click
-							sourceTile = chessBoard.getTile(tileId);
-							humanMovedPiece = sourceTile.getPiece();
+							sourceTile = chessBoard.getPiece(tileId);
+							humanMovedPiece = sourceTile;
 							if (humanMovedPiece == null) {
 								sourceTile = null;
 							}
 						} else {
 							// second click
-							// destinationTile = chessBoard.getTile(tileId);
-							// System.out.println(sourceTile.getTileCoordinate());
-							// System.out.println(destinationTile.getTileCoordinate());
-							final Move move = Move.MoveFactory.createMove(chessBoard, sourceTile.getTileCoordinate(), tileId);
+							final Move move = Move.MoveFactory.createMove(chessBoard, sourceTile.getPiecePosition(), tileId);
 							final MoveTransition transition = chessBoard.currentPlayer().makeMove(move);
 							if (transition.getMoveStatus().isDone()) {
-								chessBoard = transition.getTransitionBoard();
+								chessBoard = transition.getToBoard();
 								moveLog.addMove(move);
 							}
 							sourceTile = null;
-							// destinationTile = null;
 							humanMovedPiece = null;
 						}
-						SwingUtilities.invokeLater(() -> {
-							gameHistoryPanel.redo(chessBoard, moveLog);
-							takenPiecesPanel.redo(moveLog);
-							if (gameSetup.isAIPlayer(chessBoard.currentPlayer())) {
-								Table.get().moveMadeUpdate(PlayerType.HUMAN);
-							}
-							boardPanel.drawBoard(chessBoard);
-						});
 					}
+					SwingUtilities.invokeLater(() -> {
+						gameHistoryPanel.redo(chessBoard, moveLog);
+						takenPiecesPanel.redo(moveLog);
+						//if (gameSetup.isAIPlayer(chessBoard.currentPlayer())) {
+							Table.get().moveMadeUpdate(PlayerType.HUMAN);
+						//}
+						boardPanel.drawBoard(chessBoard);
+					});
 				}
 			});
 			validate();
@@ -432,22 +491,22 @@ public class Table extends Observable {
 		}
 
 		private void assignTileColour() {
-			if (BoardUtils.FIRST_ROW[this.tileId] || BoardUtils.THIRD_ROW[this.tileId]
-					|| BoardUtils.FIFTH_ROW[this.tileId] || BoardUtils.SEVENTH_ROW[this.tileId]) {
+			if (BoardUtils.INSTANCE.FIRST_ROW.get(this.tileId) || BoardUtils.INSTANCE.THIRD_ROW.get(this.tileId)
+					|| BoardUtils.INSTANCE.FIFTH_ROW.get(this.tileId) || BoardUtils.INSTANCE.SEVENTH_ROW.get(this.tileId)) {
 				setBackground(this.tileId % 2 == 0 ? lightTileColour : darkTileColour);
-			} else if (BoardUtils.SECOND_ROW[this.tileId] || BoardUtils.FOURTH_ROW[this.tileId]
-					|| BoardUtils.SIXTH_ROW[this.tileId] || BoardUtils.EIGHTH_ROW[this.tileId]) {
+			} else if (BoardUtils.INSTANCE.SECOND_ROW.get(this.tileId) || BoardUtils.INSTANCE.FOURTH_ROW.get(this.tileId)
+					|| BoardUtils.INSTANCE.SIXTH_ROW.get(this.tileId) || BoardUtils.INSTANCE.EIGHTH_ROW.get(this.tileId)) {
 				setBackground(this.tileId % 2 != 0 ? lightTileColour : darkTileColour);
 			}
 		}
 
 		private void assignTilePieceIcon(final Board board) {
 			this.removeAll();
-			if (board.getTile(this.tileId).isTileOccupied()) {
+			if (board.getPiece(this.tileId) != null) {
 				try {
 					final BufferedImage image = ImageIO.read(new File(defaultPieceImagesPath
-							+ board.getTile(this.tileId).getPiece().getPieceAlliance().toString().substring(0, 1)
-							+ board.getTile(this.tileId).getPiece().toString() + ".gif"));
+							+ board.getPiece(this.tileId).getPieceAlliance().toString().substring(0, 1)
+							+ board.getPiece(this.tileId).toString() + ".gif"));
 					add(new JLabel(new ImageIcon(image)));
 				} catch (IOException e) {
 					e.printStackTrace();
