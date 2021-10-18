@@ -123,11 +123,11 @@ public class Board {
 		return builder.build();
 	}
 	
-	public Player whitePlayer() {
+	public WhitePlayer whitePlayer() {
 		return this.whitePlayer;
 	}
 	
-	public Player blackPlayer() {
+	public BlackPlayer blackPlayer() {
 		return this.blackPlayer;
 	}
 	

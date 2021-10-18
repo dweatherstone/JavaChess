@@ -18,24 +18,10 @@ import static com.weatherstone.chess.engine.pieces.Piece.PieceType.ROOK;
 
 public class BlackPlayer extends Player {
 
-	public BlackPlayer(final Board board, final Collection<Move> whiteStandardLegalMoves,
-			final Collection<Move> blackStandardLegalMoves) {
+	public BlackPlayer(final Board board, 
+			           final Collection<Move> whiteStandardLegalMoves,
+			           final Collection<Move> blackStandardLegalMoves) {
 		super(board, blackStandardLegalMoves, whiteStandardLegalMoves);
-	}
-
-	@Override
-	public Collection<Piece> getActivePieces() {
-		return this.board.getBlackPieces();
-	}
-
-	@Override
-	public Alliance getAlliance() {
-		return Alliance.BLACK;
-	}
-
-	@Override
-	public Player getOpponent() {
-		return this.board.whitePlayer();
 	}
 
 	@Override
@@ -45,9 +31,9 @@ public class BlackPlayer extends Player {
 		if (!hasCastleOpportunities()) {
 			return Collections.emptyList();
 		}
-
+	
 		final List<Move> kingCastles = new ArrayList<Move>();
-		if (this.playerKing.isFirstMove() && this.playerKing.getPiecePosition() == 4 && !this.isInCheck()) {
+		if (this.playerKing.isFirstMove() && this.playerKing.getPiecePosition() == 4 && !this.isInCheck) {
 			// King side castle
 			if (this.board.getPiece(5) == null && this.board.getPiece(6) == null) {
 				final Piece kingSideRook = this.board.getPiece(7);
@@ -61,26 +47,42 @@ public class BlackPlayer extends Player {
 					}
 				}
 			}
-			// Queen side castle
-			if (this.board.getPiece(1) == null && this.board.getPiece(2) == null
-					&& this.board.getPiece(3) == null) {
-				final Piece queenSideRook = this.board.getPiece(0);
-				if (queenSideRook != null && queenSideRook.isFirstMove()) {
-					if (Player.calculateAttacksOnTile(2, opponentsLegals).isEmpty()
-							&& Player.calculateAttacksOnTile(3, opponentsLegals).isEmpty()
-							&& queenSideRook.getPieceType() == ROOK) {
-						if (!BoardUtils.isKingPawnTrap(this.board, this.playerKing, 12))
-							kingCastles.add(new QueenSideCastleMove(this.board, this.playerKing, 2,
-									(Rook) queenSideRook, queenSideRook.getPiecePosition(), 3));
-						}
+		}
+		// Queen side castle
+		if (this.board.getPiece(1) == null && this.board.getPiece(2) == null
+				&& this.board.getPiece(3) == null) {
+			final Piece queenSideRook = this.board.getPiece(0);
+			if (queenSideRook != null && queenSideRook.isFirstMove()) {
+				if (Player.calculateAttacksOnTile(2, opponentsLegals).isEmpty()
+						&& Player.calculateAttacksOnTile(3, opponentsLegals).isEmpty()
+						&& queenSideRook.getPieceType() == ROOK) {
+					if (!BoardUtils.isKingPawnTrap(this.board, this.playerKing, 12))
+						kingCastles.add(new QueenSideCastleMove(this.board, this.playerKing, 2,
+								(Rook) queenSideRook, queenSideRook.getPiecePosition(), 3));
+						
 					}
 				}
 			}
 		}
-
+	
 		return Collections.unmodifiableList(kingCastles);
 	}
-	
+
+	@Override
+	public WhitePlayer getOpponent() {
+		return this.board.whitePlayer();
+	}
+
+	@Override
+	public Collection<Piece> getActivePieces() {
+		return this.board.getBlackPieces();
+	}
+
+	@Override
+	public Alliance getAlliance() {
+		return Alliance.BLACK;
+	}
+
 	@Override
 	public String toString() {
 		return Alliance.BLACK.toString();
