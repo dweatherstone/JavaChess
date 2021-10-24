@@ -1,0 +1,9 @@
+SELECT * FROM Game ORDER BY Game_ID;
+
+SELECT * FROM Player ORDER BY Player_ID;
+
+SELECT COUNT(*) FROM Move;
+
+-- DELETE FROM Player WHERE Player_ID > 2;Game
+
+SELECT * FROM Game ORDER BY Game_ID DESC LIMIT 5;

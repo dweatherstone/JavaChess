@@ -26,3 +26,9 @@ hs_err_pid*
 .classpath
 .project
 *.prefs
+
+# Python populate DB project
+*.pgn
+WIP.ipynb
+.idea
+.ipynb_checkpoints

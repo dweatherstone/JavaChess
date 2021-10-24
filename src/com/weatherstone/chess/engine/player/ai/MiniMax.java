@@ -80,7 +80,7 @@ public class MiniMax implements MoveStrategy {
 			this.freqTable[this.freqTableIndex].increment();
 			return this.evaluator.evaluate(board, depth);
 		}
-		if (isEndGameScenario(board)) {
+		if (BoardUtils.isEndGame(board)) {
 			return this.evaluator.evaluate(board, depth);
 		}
 		int lowestSeenValue = Integer.MAX_VALUE;
@@ -102,7 +102,7 @@ public class MiniMax implements MoveStrategy {
 			this.freqTable[this.freqTableIndex].increment();
 			return this.evaluator.evaluate(board, depth);
 		}
-		if (isEndGameScenario(board)) {
+		if (BoardUtils.isEndGame(board)) {
 			return this.evaluator.evaluate(board, depth);
 		}
 		int highestSeenValue = Integer.MIN_VALUE;
@@ -116,11 +116,6 @@ public class MiniMax implements MoveStrategy {
 			}
 		}
 		return highestSeenValue;
-	}
-	
-	private static boolean isEndGameScenario(final Board board) {
-		return board.currentPlayer().isInCheckMate() || 
-			   board.currentPlayer().isInStaleMate();
 	}
 	
 	@Override

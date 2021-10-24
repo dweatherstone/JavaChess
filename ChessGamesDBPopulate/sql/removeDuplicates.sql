@@ -1,0 +1,64 @@
+SELECT Event, Site, Date, Round, White, Black, Winner, WhiteELO, BlackELO, ECO, COUNT(*) AS Qty, MIN(Game_ID) AS MinGameId, MAX(Game_ID) AS MaxGameId
+FROM Game
+GROUP BY Event, Site, Date, Round, White, Black, Winner, WhiteELO, BlackELO, ECO
+HAVING COUNT(*) > 1
+ORDER BY Qty DESC
+LIMIT 100;
+
+SELECT Game_ID FROM Game
+WHERE Event = 'Breslau m'
+AND Site = 'Breslau'
+AND Date = '1865-01-01'
+AND Round IS NULL
+AND White = 50842
+AND Black = 50763
+AND Winner = 'W'
+AND WhiteELO IS NULL
+AND BlackELO IS NULL
+AND ECO = 'C37';
+
+START TRANSACTION;
+
+DELETE FROM Move WHERE Game_ID IN (
+60302,
+60303,
+60304,
+60306,
+266006,
+266008,
+266009,
+266010,
+266011);
+
+SELECT ROW_COUNT();
+
+DELETE FROM Game
+WHERE Game_ID IN (
+60302,
+60303,
+60304,
+60306,
+266006,
+266008,
+266009,
+266010,
+266011);
+
+SELECT ROW_COUNT();
+
+SELECT *
+FROM Game
+WHERE Event = 'Breslau m'
+AND Site = 'Breslau'
+AND Date = '1865-01-01'
+AND Round IS NULL
+AND White = 50842
+AND Black = 50763
+AND Winner = 'W'
+AND WhiteELO IS NULL
+AND BlackELO IS NULL
+AND ECO = 'C37';
+
+ROLLBACK;
+COMMIT;
+
