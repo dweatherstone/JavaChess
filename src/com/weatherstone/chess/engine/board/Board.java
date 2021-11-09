@@ -26,7 +26,6 @@ import com.weatherstone.chess.engine.player.WhitePlayer;
 
 public class Board {
 	
-	// private final List<Tile> gameBoard;
 	private final Map<Integer, Piece> boardConfig;
 	private final Collection<Piece> whitePieces;
 	private final Collection<Piece> blackPieces;
@@ -40,7 +39,6 @@ public class Board {
 	private static final Board STANDARD_BOARD = createStandardBoardImpl();
 	
 	private Board(final Builder builder) {
-		//this.gameBoard = createGameBoard(builder);
 		this.boardConfig = Collections.unmodifiableMap(builder.boardConfig);
 		this.whitePieces = calculateActivePieces(builder, Alliance.WHITE);
 		this.blackPieces = calculateActivePieces(builder, Alliance.BLACK);
@@ -80,7 +78,8 @@ public class Board {
 	}
 
 	private Collection<Move> calculateLegalMoves(final Collection<Piece> pieces) {
-		return pieces.stream().flatMap(piece -> piece.calculateLegalMoves(this).stream()).collect(Collectors.toList());
+		return pieces.stream().flatMap(piece -> piece.calculateLegalMoves(this).stream())
+				.collect(Collectors.toList());
 	}
 
 	private static Collection<Piece> calculateActivePieces(final Builder builder, final Alliance alliance) {

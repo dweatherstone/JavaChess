@@ -24,7 +24,7 @@ public abstract class Game implements Playable {
 	}
 	
 	public String getWinner() {
-		return this.getWinner();
+		return this.winner;
 	}
 
 	private static String calculateWinner(final String gameOutcome) {

@@ -51,7 +51,7 @@ import com.weatherstone.chess.engine.player.ai.AlphaBetaPruning;
 import com.weatherstone.chess.engine.player.ai.StandardBoardEvaluator;
 import com.weatherstone.chess.pgn.FenUltils;
 import com.weatherstone.chess.pgn.MySqlGamePersistence;
-import com.weatherstone.chess.pgn.PGNUtilities;
+import com.weatherstone.chess.pgn.PGNUtils;
 
 public class Table extends Observable {
 
@@ -399,7 +399,7 @@ public class Table extends Observable {
 	
 	private static void loadPGNFile(final File pgnFile) {
 		try {
-			PGNUtilities.persistPGNFile(pgnFile);
+			PGNUtils.persistPGNFile(pgnFile);
 		}
 		catch (final IOException e) {
 			e.printStackTrace();
@@ -408,7 +408,7 @@ public class Table extends Observable {
 	
 	private static void savePGNFile(final File pgnFile) {
 		try {
-			PGNUtilities.writeGameToPGNFile(pgnFile, Table.get().getMoveLog());
+			PGNUtils.writeGameToPGNFile(pgnFile, Table.get().getMoveLog());
 		}
 		catch (final IOException e) {
 			e.printStackTrace();

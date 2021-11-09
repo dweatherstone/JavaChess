@@ -17,7 +17,7 @@ class PGNParserTest {
 
 	@Test
 	void test1() throws IOException {
-		doTest("tests/pgn/t1.pgn");
+		doTest("pgn/t1.pgn");
 	}
 /**	
 	@Test

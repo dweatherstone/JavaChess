@@ -2,6 +2,7 @@ import os
 import mysql.connector
 import re
 import datetime
+import configparser
 
 def process_file(filepath, debug=False):
     with open(filepath, 'r') as f:
@@ -63,7 +64,13 @@ def correct_elo_format(elo_input):
 
 
 def populate_db(game_details, process_game_start=-1, process_game_end=-1, debug=False):
-    cnx = mysql.connector.connect(host="localhost", user="root", password="chimneys23", database="ChessGames")
+    parser = configparser.ConfigParser()
+    config_file = os.path.join(os.getcwd(), '..', 'config.properties')
+    parser.read(config_file)
+    host = parser.get("config", "db.host")
+    user = parser.get("config", "db.user")
+    password = parser.get("config", "db.password")
+    cnx = mysql.connector.connect(host=host, user=user, password=password, database="ChessGames")
     if process_game_start == -1 or process_game_end == -1:
         for i in range(len(game_details)):
             this_game_details = game_details[i]
