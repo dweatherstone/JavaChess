@@ -33,3 +33,6 @@ config.properties
 WIP.ipynb
 .idea
 .ipynb_checkpoints
+
+# Target folder does not need to be committed.
+/target
